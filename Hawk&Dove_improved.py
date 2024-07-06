@@ -1,5 +1,5 @@
 import random
-
+import matplotlib.pyplot as plt
 class Player:
     def __init__(self, type):
         self.type = type
@@ -27,40 +27,64 @@ class Simulation:
             player2 = self.population[i + 1]
 
             if player1.type == 'Hawk' and player2.type == 'Dove':
-                player1.gain_food(2)
-                player2.food = 0
+                player1.gain_food(1.5)
+                player2.gain_food(0.5)
+                if random.random() < 0.5:
+                    next_population.append(Player('Dove'))
+                if player1.food >= 1.5 and random.random() < 0.5:
+                    next_population.append(Player('Hawk'))
             elif player1.type == 'Dove' and player2.type == 'Hawk':
-                player2.gain_food(2)
-                player1.food = 0
+                player2.gain_food(1.5)
+                player1.gain_food(0.5)
+                if random.random() < 0.5:
+                    next_population.append(Player('Dove'))
+                if player2.food >= 1.5 and random.random() < 0.5:
+                    next_population.append(Player('Hawk'))
             elif player1.type == 'Dove' and player2.type == 'Dove':
                 player1.gain_food(1)
                 player2.gain_food(1)
             elif player1.type == 'Hawk' and player2.type == 'Hawk':
-                player1.food = 0
-                player2.food = 0
+                continue  # Both Hawks die
 
         for player in self.population:
-            if player.food >= 2:
-                next_population.append(Player(player.type))
-                next_population.append(Player(player.type))
-            elif player.food > 0:
-                next_population.append(Player(player.type))
+            if player.food >= 1:
+                next_population.append(Player(player.type))   # Survives
+            # elif player.food > 0:
+            #     next_population.append(Player(player.type)) 
+
             player.reset_food()
-            
 
         self.population = next_population
 
     def run_simulation(self, rounds):
+        hawks_count=[]
+        doves_count=[]
         for round in range(rounds):
             self.pair_and_play()
             num_hawks = sum(1 for player in self.population if player.type == 'Hawk')
             num_doves = sum(1 for player in self.population if player.type == 'Dove')
+            hawks_count.append(num_hawks)
+            doves_count.append(num_doves)
             print(f"Round {round + 1}: Hawks = {num_hawks}, Doves = {num_doves}")
 
-#  Initialize and run the simulation
-num_hawks = 50
-num_doves = 51
-rounds = 10
+        return hawks_count,doves_count
+
+# Initialize and run the simulation
+num_hawks = 10
+num_doves = 1000
+rounds = 15
 
 simulation = Simulation(num_hawks, num_doves)
-simulation.run_simulation(rounds)
+hawk_counts,dove_counts=simulation.run_simulation(rounds)
+
+
+# Plotting the results
+plt.figure(figsize=(10, 6))
+plt.plot(range(1, rounds + 1), hawk_counts, label='Hawks', color='r')
+plt.plot(range(1, rounds + 1), dove_counts, label='Doves', color='b')
+plt.xlabel('Rounds')
+plt.ylabel('Population')
+plt.title('Hawk and Dove Population vs Rounds')
+plt.legend()
+plt.grid(True)
+plt.show()
