@@ -5,13 +5,13 @@ from matplotlib import pyplot as plt
 # Constants
 ENV_WIDTH = 100
 ENV_HEIGHT = 100
-FOOD_SPAWN_RATE = 1000
+FOOD_SPAWN_RATE = 80
 STARTING_DOVES = 50
 STARTING_HAWKS = 50
 ROUNDS = 10
 DAY_LENGTH = 10
 NIGHT_LENGTH = 5
-STARTING_ENERGY = 300
+STARTING_ENERGY = 250
 ENERGY_REQUIRED_FOR_REPRODUCTION = 200
 ENERGY_LOSS_PER_DAY = 5
 ENERGY_LOSS_PER_NIGHT = 1
@@ -120,13 +120,15 @@ class Simulation:
     def cull(self):
         dead_hawks = 0
         dead_doves = 0
-        self.agents = [agent for agent in self.agents if agent.energy >= 0]
+        self.agents = [agent for agent in self.agents ]
         for agent in self.agents:
             if agent.energy < 0:
                 if agent.type == TYPE_HAWK:
                     dead_hawks += 1
+                    
                 else:
                     dead_doves += 1
+        print(dead_doves,dead_hawks)
         return dead_hawks, dead_doves
 
     def breed(self):
