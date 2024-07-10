@@ -70,9 +70,9 @@ class Simulation:
         return hawks_count,doves_count
 
 # Initialize and run the simulation
-num_hawks = 10
+num_hawks = 1
 num_doves = 1000
-rounds = 15
+rounds = 30
 
 simulation = Simulation(num_hawks, num_doves)
 hawk_counts,dove_counts=simulation.run_simulation(rounds)
