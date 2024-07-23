@@ -5,17 +5,19 @@ from matplotlib import pyplot as plt
 # Constants
 ENV_WIDTH = 100
 ENV_HEIGHT = 100
-FOOD_SPAWN_RATE = 80
+FOOD_SPAWN_RATE = 200
 STARTING_DOVES = 50
 STARTING_HAWKS = 50
 ROUNDS = 10
-DAY_LENGTH = 10
+DAY_LENGTH = 15
 NIGHT_LENGTH = 5
-STARTING_ENERGY = 250
+STARTING_ENERGY = 150
 ENERGY_REQUIRED_FOR_REPRODUCTION = 200
 ENERGY_LOSS_PER_DAY = 5
+
 ENERGY_LOSS_PER_NIGHT = 1
 ENERGY_GAIN_FROM_FOOD = 50
+ENERGY_REQUIRED_FOR_LIVING=20
 STATUS_ACTIVE = "active"
 STATUS_RESTING = "resting"
 TYPE_HAWK = "hawk"
@@ -36,7 +38,7 @@ class Agent:
     def eat(self, food_positions):
         
         if (self.x, self.y) in food_positions:
-            
+            print("yes")
             
             self.energy += ENERGY_GAIN_FROM_FOOD
             food_positions.remove((self.x, self.y))
@@ -110,25 +112,29 @@ class Simulation:
             for agent in self.agents:
                 agent.move(self.env.width, self.env.height)
                 agent.eat(self.env.food_positions)
+                # print(agent.energy,"day",day)
                 agent.energy -= ENERGY_LOSS_PER_DAY
 
     def night_phase(self):
         for night in range(NIGHT_LENGTH):
             for agent in self.agents:
+                # print(agent.energy,"night",night)
                 agent.energy -= ENERGY_LOSS_PER_NIGHT
 
     def cull(self):
         dead_hawks = 0
         dead_doves = 0
-        self.agents = [agent for agent in self.agents ]
+        new_agents = []
         for agent in self.agents:
-            if agent.energy < 0:
+            if agent.energy < ENERGY_REQUIRED_FOR_LIVING:
                 if agent.type == TYPE_HAWK:
                     dead_hawks += 1
-                    
                 else:
                     dead_doves += 1
-        print(dead_doves,dead_hawks)
+            else:
+                new_agents.append(agent)
+
+        self.agents = new_agents  # Update self.agents with the surviving agents
         return dead_hawks, dead_doves
 
     def breed(self):
@@ -137,14 +143,14 @@ class Simulation:
         new_agents = []
         for agent in self.agents:
             if agent.energy >= ENERGY_REQUIRED_FOR_REPRODUCTION:
-                baby_energy = agent.energy // 2
+                # baby_energy = agent.energy // 2
                 agent.energy //= 2
                 new_agents.append(Agent(agent.type, random.randint(0, ENV_WIDTH - 1), random.randint(0, ENV_HEIGHT - 1)))
-                new_agents.append(Agent(agent.type, random.randint(0, ENV_WIDTH - 1), random.randint(0, ENV_HEIGHT - 1)))
+                # new_agents.append(Agent(agent.type, random.randint(0, ENV_WIDTH - 1), random.randint(0, ENV_HEIGHT - 1)))
                 if agent.type == TYPE_HAWK:
-                    hawk_babies += 2
+                    hawk_babies += 1
                 else:
-                    dove_babies += 2
+                    dove_babies += 1
         self.agents.extend(new_agents)
         return hawk_babies, dove_babies
 
