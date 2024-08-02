@@ -5,15 +5,15 @@ from matplotlib import pyplot as plt
 # Constants
 ENV_WIDTH = 100
 ENV_HEIGHT = 100
-FOOD_SPAWN_RATE = 200
+FOOD_SPAWN_RATE = 2500
 STARTING_PLAYERS = 50
-ROUNDS = 10
-DAY_LENGTH = 15
-NIGHT_LENGTH = 5
+ROUNDS = 50
+DAY_LENGTH = 2
+NIGHT_LENGTH = 1
 STARTING_ENERGY = 150
 ENERGY_GAIN_FROM_FOOD = 50
-BASE_ENERGY_REQUIRED_FOR_LIVING = 20
-BASE_ENERGY_REQUIRED_FOR_REPRODUCTION = 200
+BASE_ENERGY_REQUIRED_FOR_LIVING = 25
+BASE_ENERGY_REQUIRED_FOR_REPRODUCTION = 150
 STATUS_ACTIVE = "active"
 STATUS_RESTING = "resting"
 
@@ -37,18 +37,23 @@ class Agent:
         self.y = y
         self.genome = genome
         self.fitness = genome.fitness
-        self.fitness_factor = 100 / (self.fitness + 1)  # Inverse proportion
-        self.energy_required_for_living = BASE_ENERGY_REQUIRED_FOR_LIVING * self.fitness_factor
-        self.energy_required_for_reproduction = BASE_ENERGY_REQUIRED_FOR_REPRODUCTION * self.fitness_factor
+        # print(self.fitness)
+        self.fitness_factor = 1 / (self.fitness)  # Inverse proportion
+        self.energy_required_for_living = BASE_ENERGY_REQUIRED_FOR_LIVING 
+        self.energy_required_for_reproduction = BASE_ENERGY_REQUIRED_FOR_REPRODUCTION 
+        # print(self.energy_required_for_living,self.energy_required_for_reproduction)
         self.status = STATUS_ACTIVE
 
     def move(self, env_width, env_height):
         self.x = (self.x + random.choice([-1, 0, 1])) % env_width
         self.y = (self.y + random.choice([-1, 0, 1])) % env_height
+        # print(self.x,self.y)
 
     def eat(self, food_positions):
         if (self.x, self.y) in food_positions:
+            # print("yes")
             self.energy += ENERGY_GAIN_FROM_FOOD
+            # print(self.energy)
             food_positions.remove((self.x, self.y))
 
 class Environment:
@@ -115,36 +120,52 @@ class Simulation:
             for player in self.players:
                 player.move(self.env.width, self.env.height)
                 player.eat(self.env.food_positions)
+                
                 player.energy -= player.energy_required_for_living
+                # [print(player.energy)]
 
     def night_phase(self):
         for night in range(NIGHT_LENGTH):
             for player in self.players:
                 player.energy -= player.energy_required_for_living
+                
 
     def cull(self):
         dead_players = 0
         new_players = []
+        total_fitness = sum(player.fitness for player in self.players)
+    
         for player in self.players:
-            if player.energy < player.energy_required_for_living:
+            survival_probability = player.fitness*35 / total_fitness
+            # print(survival_probability,random.random())
+            # print(player.energy,player.genome)
+            if player.energy < player.energy_required_for_living or random.random() > survival_probability:
                 dead_players += 1
+                # print("dead")
             else:
                 new_players.append(player)
+                # print("append")
         self.players = new_players
         return dead_players
 
     def breed(self):
         player_babies = 0
         new_players = []
+
+        total_fitness = sum(player.fitness for player in self.players)
+        
         for player in self.players:
-            if player.energy >= player.energy_required_for_reproduction:
+            reproduction_probability = player.fitness*35 / total_fitness
+            if player.energy >= player.energy_required_for_reproduction and random.random() <= reproduction_probability:
                 player.energy //= 2
                 genome_sequence = ''.join(random.choices('ATGC', k=4))
-                genome = Genome(genome_sequence)
+                genome = player.genome
                 new_players.append(Agent(random.randint(0, ENV_WIDTH - 1), random.randint(0, ENV_HEIGHT - 1), genome))
                 player_babies += 1
+
         self.players.extend(new_players)
         return player_babies
+
 
     def get_count(self):
         return len(self.players)
