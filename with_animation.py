@@ -1,6 +1,7 @@
 import random
 import time
 from matplotlib import pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 # Constants
 ENV_WIDTH = 100
@@ -91,39 +92,52 @@ class Simulation:
             players_list.append(Agent(random.randint(0, ENV_WIDTH - 1), random.randint(0, ENV_HEIGHT - 1), genome))
         return players_list
 
+    
     def run(self):
-        current_round = 1
-        death_count = 0
-        breed_count = 0
+        fig, ax = plt.subplots()
+        ax.set_xlim(0, ENV_WIDTH)
+        ax.set_ylim(0, ENV_HEIGHT)
 
-        while current_round <= self.rounds and len(self.players) > 2:
-            print(f"ROUND {current_round}")
+        player_scat = ax.scatter([player.x for player in self.players], 
+                          [player.y for player in self.players], 
+                          c='blue', marker='*')
 
+        food_scat = ax.scatter([food[0] for food in self.env.food_positions],
+                               [food[1] for food in self.env.food_positions],
+                               c='green',marker=".")
+
+        def update(frame):
+            # Simulate a day
+            for _ in range(DAY_LENGTH):
+                for player in self.players:
+                    player.move(self.env.width, self.env.height)
+                    player.eat(self.env.food_positions)
+                    player.energy -= player.energy_required_for_living/DAY_LENGTH
+
+                # self.normalize_fitness_values()
+                self.cull()
+                self.breed()
+
+                xdata = [player.x for player in self.players]
+                ydata = [player.y for player in self.players]
+
+                player_scat.set_offsets(list(zip(xdata, ydata)))
+
+                food_xdata = [food[0] for food in self.env.food_positions]
+                food_ydata = [food[1] for food in self.env.food_positions]
+                food_scat.set_offsets(list(zip(food_xdata, food_ydata)))
+
+            # Simulate a night
+            for _ in range(NIGHT_LENGTH):
+                for player in self.players:
+                    player.energy -= player.energy_required_for_living/NIGHT_LENGTH
+
+            # Spawn new food for the next day
             self.env.spawn_food()
-            self.day_phase()
-            self.night_phase()
-            round_dead_players = self.cull()
-            round_player_babies = self.breed()
-            death_count += round_dead_players
-            breed_count += round_player_babies
+            return player_scat, food_scat
 
-            player_count = self.get_count()
-            print(f"players: {player_count}")
-            print(f"Dead agents: {round_dead_players}")
-            print(f"player babies: {round_player_babies}")
-            print("----")
-
-            self.graph_player_points.append(player_count)
-            current_round += 1
-
-        print("=============================================================")
-        print(f"Total dead agents: {death_count}")
-        print(f"Total breeding agents: {breed_count}")
-        print(f"Total rounds completed: {current_round - 1}")
-        print(f"Total population size: {len(self.players)}")
-        print("=============================================================")
-
-        self.plot_results()
+        animation = FuncAnimation(fig, update, frames=range(self.rounds), blit=True, repeat=False)
+        plt.show()
 
     def day_phase(self):
         for day in range(DAY_LENGTH):
@@ -134,12 +148,14 @@ class Simulation:
                 player.energy -= ENERGY_LOSS_PER_DAY/DAY_LENGTH
                 # [print(player.energy)]
             # self.plot_environment(day) 
+            yield
 
     def night_phase(self):
         for night in range(NIGHT_LENGTH):
             for player in self.players:
                 player.energy -= ENERGY_LOSS_PER_NIGHT/NIGHT_LENGTH
                 
+        yield
 
     def cull(self):
         dead_players = 0
