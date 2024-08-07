@@ -8,9 +8,9 @@ ENV_HEIGHT = 100
 FOOD_SPAWN_RATE = 500
 STARTING_PLAYERS = 50
 ROUNDS = 50
-DAY_LENGTH = 15
+DAY_LENGTH = 50
 NIGHT_LENGTH = 5
-ENERGY_LOSS_PER_NIGHT = 10
+ENERGY_LOSS_PER_NIGHT = 5
 ENERGY_LOSS_PER_DAY = 25
 STARTING_ENERGY = 150
 ENERGY_GAIN_FROM_FOOD = 35
@@ -100,13 +100,14 @@ class Simulation:
             print(f"ROUND {current_round}")
 
             self.env.spawn_food()
+            print("fooooooodd",len(self.env.food_positions))
             self.day_phase()
             self.night_phase()
             round_dead_players = self.cull()
             round_player_babies = self.breed()
             death_count += round_dead_players
             breed_count += round_player_babies
-
+            
             player_count = self.get_count()
             print(f"players: {player_count}")
             print(f"Dead agents: {round_dead_players}")
@@ -134,6 +135,8 @@ class Simulation:
                 player.energy -= ENERGY_LOSS_PER_DAY/DAY_LENGTH
                 # [print(player.energy)]
             # self.plot_environment(day) 
+        print(len(self.env.food_positions))
+        self.env.food_positions=[]
 
     def night_phase(self):
         for night in range(NIGHT_LENGTH):
@@ -171,7 +174,7 @@ class Simulation:
             if player.energy >= player.energy_required_for_reproduction and random.random() <= reproduction_probability:
                 player.energy //= 2
                 genome_sequence =mutate_genome_sequence(player.genome.sequence)
-                # print(player.genome.sequence,genome_sequence)
+                print(player.genome.sequence,genome_sequence)
                 genome = Genome(genome_sequence)
                 new_players.append(Agent(random.randint(0, ENV_WIDTH - 1), random.randint(0, ENV_HEIGHT - 1), genome))
                 player_babies += 1
