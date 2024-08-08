@@ -137,7 +137,7 @@ class Simulation:
                 # print(player.genome.sequence)
                 player.energy -= ENERGY_LOSS_PER_DAY/DAY_LENGTH
                 # [print(player.energy)]
-            # self.plot_environment(day) 
+            # self.plot_environment(day)
             
         
 

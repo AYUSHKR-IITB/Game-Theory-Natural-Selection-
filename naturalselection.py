@@ -7,8 +7,8 @@ ENV_WIDTH = 100
 ENV_HEIGHT = 100
 FOOD_SPAWN_RATE = 500
 STARTING_PLAYERS = 50
-ROUNDS = 50
-DAY_LENGTH = 50
+ROUNDS = 45
+DAY_LENGTH = 15
 NIGHT_LENGTH = 5
 ENERGY_LOSS_PER_NIGHT = 5
 ENERGY_LOSS_PER_DAY = 25
@@ -81,6 +81,15 @@ class Simulation:
         self.players = self.init_players(starting_players)
         self.rounds = rounds
         self.graph_player_points = []
+                # Initialize plot
+        plt.ion()  
+        self.fig, self.ax = plt.subplots(figsize=(8, 8))
+        self.ax.set_xlim(0, ENV_WIDTH)
+        self.ax.set_ylim(0, ENV_HEIGHT)
+        self.food_scatter = self.ax.scatter([], [], c='green', label='Food', marker='*')
+        self.player_scatter = self.ax.scatter([], [], c='blue', label='Players', marker='x')
+        self.ax.legend()
+        self.ax.grid()
 
     def init_players(self, players):
         players_list = []
@@ -134,8 +143,7 @@ class Simulation:
                 # print(player.genome.sequence)
                 player.energy -= ENERGY_LOSS_PER_DAY/DAY_LENGTH
                 # [print(player.energy)]
-            # self.plot_environment(day) 
-        print(len(self.env.food_positions))
+            self.update_plot(day)
         self.env.food_positions=[]
 
     def night_phase(self):
@@ -174,7 +182,7 @@ class Simulation:
             if player.energy >= player.energy_required_for_reproduction and random.random() <= reproduction_probability:
                 player.energy //= 2
                 genome_sequence =mutate_genome_sequence(player.genome.sequence)
-                print(player.genome.sequence,genome_sequence)
+                # print(player.genome.sequence,genome_sequence)
                 genome = Genome(genome_sequence)
                 new_players.append(Agent(random.randint(0, ENV_WIDTH - 1), random.randint(0, ENV_HEIGHT - 1), genome))
                 player_babies += 1
@@ -186,24 +194,19 @@ class Simulation:
     def get_count(self):
         return len(self.players)
     
-    def plot_environment(self, day):
-        plt.figure(figsize=(8, 8))
-        plt.xlim(0, ENV_WIDTH)
-        plt.ylim(0, ENV_HEIGHT)
-
-        food_x, food_y = zip(*self.env.food_positions)
-        plt.scatter(food_x, food_y, c='green', label='Food', marker='*')
-
+    def update_plot(self, day):
+        food_x, food_y = zip(*self.env.food_positions) if self.env.food_positions else ([], [])
         player_x = [player.x for player in self.players]
         player_y = [player.y for player in self.players]
-        plt.scatter(player_x, player_y, c='blue', label='Players', marker='x')
 
-        plt.title(f"Day {day}")
-        plt.legend()
-        plt.grid()
-        plt.show()
-        plt.show(block=False)
-        plt.close('all')
+        self.food_scatter.set_offsets(list(zip(food_x, food_y)))
+        self.player_scatter.set_offsets(list(zip(player_x, player_y)))
+        self.ax.set_title(f"Day {day}")
+
+        # Redraw the figure
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        time.sleep(0.05)
 
     def plot_results(self):
         plt.plot(self.graph_player_points, label="players")
@@ -214,4 +217,7 @@ class Simulation:
 
 if __name__ == "__main__":
     simulation = Simulation(ENV_WIDTH, ENV_HEIGHT, STARTING_PLAYERS, ROUNDS)
+    # Turn on interactive mod
     simulation.run()
+    plt.ioff()  # Turn off interactive mode after simulation is done
+    plt.show()
