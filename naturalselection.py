@@ -8,7 +8,7 @@ ENV_HEIGHT = 100
 FOOD_SPAWN_RATE = 500
 STARTING_PLAYERS = 50
 ROUNDS = 45
-DAY_LENGTH = 15
+ROUND_DURATION = 500
 NIGHT_LENGTH = 5
 ENERGY_LOSS_PER_NIGHT = 5
 ENERGY_LOSS_PER_DAY = 25
@@ -110,7 +110,7 @@ class Simulation:
 
             self.env.spawn_food()
             print("fooooooodd",len(self.env.food_positions))
-            self.day_phase()
+            self.day_phase(current_round)
             self.night_phase()
             round_dead_players = self.cull()
             round_player_babies = self.breed()
@@ -135,15 +135,19 @@ class Simulation:
 
         self.plot_results()
 
-    def day_phase(self):
-        for day in range(DAY_LENGTH):
+    def day_phase(self,round):
+        start_time=1
+        while True:
             for player in self.players:
                 player.move(self.env.width, self.env.height)
                 player.eat(self.env.food_positions)
                 # print(player.genome.sequence)
-                player.energy -= ENERGY_LOSS_PER_DAY/DAY_LENGTH
+                player.energy -= ENERGY_LOSS_PER_DAY/ROUND_DURATION
                 # [print(player.energy)]
-            self.update_plot(day)
+            self.update_plot(round,start_time)
+            start_time+=1
+            if start_time >= ROUND_DURATION:
+                break
         self.env.food_positions=[]
 
     def night_phase(self):
@@ -194,19 +198,20 @@ class Simulation:
     def get_count(self):
         return len(self.players)
     
-    def update_plot(self, day):
+    def update_plot(self, round,duration):
         food_x, food_y = zip(*self.env.food_positions) if self.env.food_positions else ([], [])
         player_x = [player.x for player in self.players]
         player_y = [player.y for player in self.players]
 
         self.food_scatter.set_offsets(list(zip(food_x, food_y)))
         self.player_scatter.set_offsets(list(zip(player_x, player_y)))
-        self.ax.set_title(f"Day {day}")
+        self.ax.set_title(f"ROUND {round}")
+        self.fig.suptitle(f"TIME {duration}")
 
         # Redraw the figure
         self.fig.canvas.draw()
         self.fig.canvas.flush_events()
-        time.sleep(0.05)
+        time.sleep(0.01)
 
     def plot_results(self):
         plt.plot(self.graph_player_points, label="players")
