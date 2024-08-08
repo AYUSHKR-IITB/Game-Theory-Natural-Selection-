@@ -1,6 +1,5 @@
 # Game-Theory-Natural-Selection-
 Using Game Theory natural selection and decision making is simulated .
-
-https://github.com/user-attachments/assets/4d9699c5-a058-4138-87a9-3d483eac6103
+https://github.com/user-attachments/assets/a5cc63be-e891-4720-bf50-041356b52615
 
 
